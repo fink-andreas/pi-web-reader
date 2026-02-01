@@ -99,6 +99,46 @@ function isTextOrMarkdown(contentType: string): boolean {
 }
 
 /**
+ * Check if content looks like markdown
+ *
+ * Checks for common markdown patterns:
+ * - ATX headings (#, ##, etc.)
+ * - Setext headings (=== or --- on next line)
+ *
+ * @param body - The content to check
+ * @returns True if the content appears to be markdown
+ */
+function looksLikeMarkdown(body: string): boolean {
+	if (!body || body.trim().length === 0) {
+		return false;
+	}
+
+	const trimmedBody = body.trim();
+
+	// Check for ATX headings: # heading
+	const atxHeadingRegex = /^#{1,6}\s+/m;
+	if (atxHeadingRegex.test(trimmedBody)) {
+		return true;
+	}
+
+	// Check for Setext headings: === or --- on the next line after some text
+	const lines = trimmedBody.split("\n");
+	for (let i = 0; i < lines.length - 1; i++) {
+		const line = lines[i].trim();
+		const nextLine = lines[i + 1].trim();
+
+		// Need non-empty line followed by only === or ---
+		if (line.length > 0) {
+			if (/^={3,}$/.test(nextLine) || /^-{3,}$/.test(nextLine)) {
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+/**
  * Tool definition for read_website
  */
 export default function webReaderExtension(pi: ExtensionAPI) {
@@ -114,7 +154,7 @@ export default function webReaderExtension(pi: ExtensionAPI) {
 			// Implementation steps (to be done in subsequent issues):
 			// INN-52: HTTP fetch with timeout, custom User-Agent, SSL verification disabled ✓ DONE
 			// INN-53: Content-Type detection (text/plain, text/markdown, markdown detection) ✓ DONE
-			// INN-54: Markdown detection (body starts with # heading)
+			// INN-54: Markdown detection (body starts with # heading) ✓ DONE
 			// INN-55: HTML parsing with fallback selectors
 			// INN-56: HTML to Markdown conversion using turndown
 			// INN-57: Relative URL to absolute URL conversion
@@ -131,9 +171,17 @@ export default function webReaderExtension(pi: ExtensionAPI) {
 				};
 			}
 
-			// Step 3: Check if body looks like markdown (INN-54)
-			// Placeholder - subsequent issues will add HTML parsing and markdown detection
-			throw new Error("Content-Type detection implemented, pending markdown detection (INN-54 through INN-57)");
+			// Step 3: Check if body looks like markdown
+			if (looksLikeMarkdown(body)) {
+				return {
+					content: [{ type: "text", text: body }],
+					details: { contentType, detected: "markdown" },
+				};
+			}
+
+			// Step 4: HTML parsing and conversion (INN-55, INN-56, INN-57)
+			// Placeholder - subsequent issues will add HTML parsing and conversion
+			throw new Error("Markdown detection implemented, pending HTML parsing and conversion (INN-55 through INN-57)");
 		},
 	});
 }
