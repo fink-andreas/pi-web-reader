@@ -300,48 +300,59 @@ export default function webReaderExtension(pi: ExtensionAPI) {
 		async execute(toolCallId, params, _onUpdate, _ctx, _signal) {
 			const { url } = params as { url: string };
 
-			// Implementation steps (to be done in subsequent issues):
+			// Implementation steps (all complete):
 			// INN-52: HTTP fetch with timeout, custom User-Agent, SSL verification disabled ✓ DONE
 			// INN-53: Content-Type detection (text/plain, text/markdown, markdown detection) ✓ DONE
 			// INN-54: Markdown detection (body starts with # heading) ✓ DONE
 			// INN-55: HTML parsing with fallback selectors ✓ DONE
 			// INN-56: HTML to Markdown conversion using turndown ✓ DONE
 			// INN-57: Relative URL to absolute URL conversion ✓ DONE
-			// INN-58: Error handling
+			// INN-58: Error handling ✓ DONE
 
-			// Step 1: Fetch the URL
-			const { body, contentType } = await fetchUrl(url);
+			try {
+				// Step 1: Fetch the URL
+				const { body, contentType } = await fetchUrl(url);
 
-			// Step 2: Check if content type is text/plain or text/markdown
-			if (isTextOrMarkdown(contentType)) {
+				// Step 2: Check if content type is text/plain or text/markdown
+				if (isTextOrMarkdown(contentType)) {
+					return {
+						content: [{ type: "text", text: body }],
+						details: { contentType },
+					};
+				}
+
+				// Step 3: Check if body looks like markdown
+				if (looksLikeMarkdown(body)) {
+					return {
+						content: [{ type: "text", text: body }],
+						details: { contentType, detected: "markdown" },
+					};
+				}
+
+				// Step 4: Extract main content from HTML
+				let mainContent = extractMainContent(body);
+
+				// Step 5: Convert relative URLs to absolute
+				mainContent = convertUrlsToAbsolute(mainContent, url);
+
+				// Step 6: Convert to Markdown
+				const markdown = htmlToMarkdown(mainContent);
+
+				// Step 7: Return the Markdown content
 				return {
-					content: [{ type: "text", text: body }],
-					details: { contentType },
+					content: [{ type: "text", text: markdown }],
+					details: { contentType, converted: true },
+				};
+			} catch (error) {
+				// Return error result with clear message
+				const errorMessage =
+					error instanceof Error ? error.message : "Unknown error occurred";
+				return {
+					content: [{ type: "text", text: `Failed to read website: ${errorMessage}` }],
+					isError: true,
+					details: { error: errorMessage },
 				};
 			}
-
-			// Step 3: Check if body looks like markdown
-			if (looksLikeMarkdown(body)) {
-				return {
-					content: [{ type: "text", text: body }],
-					details: { contentType, detected: "markdown" },
-				};
-			}
-
-			// Step 4: Extract main content from HTML
-			let mainContent = extractMainContent(body);
-
-			// Step 5: Convert relative URLs to absolute
-			mainContent = convertUrlsToAbsolute(mainContent, url);
-
-			// Step 6: Convert to Markdown
-			const markdown = htmlToMarkdown(mainContent);
-
-			// Step 7: Return the Markdown content
-			return {
-				content: [{ type: "text", text: markdown }],
-				details: { contentType, converted: true },
-			};
 		},
 	});
 }
