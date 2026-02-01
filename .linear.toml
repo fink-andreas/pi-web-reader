@@ -1,0 +1,6 @@
+# linear cli
+# https://github.com/schpet/linear-cli
+
+workspace = "patchday"
+team_id = "INN"
+issue_sort = "manual"

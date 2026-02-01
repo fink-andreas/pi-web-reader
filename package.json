@@ -1,0 +1,26 @@
+{
+  "name": "@fink-andreas/pi-web-reader",
+  "version": "0.1.0",
+  "description": "pi-coding-agent extension: fetch and extract readable text from web pages.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fink-andreas/pi-web-reader.git"
+  },
+  "bugs": {
+    "url": "https://github.com/fink-andreas/pi-web-reader/issues"
+  },
+  "homepage": "https://github.com/fink-andreas/pi-web-reader#readme",
+  "keywords": ["pi-package", "pi-coding-agent", "pi", "extension"],
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist", "README.md", "LICENSE"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  }
+}
