@@ -9,6 +9,7 @@
 import axios from "axios";
 import https from "https";
 import { parse } from "node-html-parser";
+import TurndownService from "turndown";
 import type { ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-agent";
 import { Type } from "@sinclair/typebox";
 
@@ -180,6 +181,25 @@ function extractMainContent(html: string): string {
 }
 
 /**
+ * Convert HTML to Markdown using turndown
+ *
+ * Configured with:
+ * - ATX headings (#) instead of Setext
+ * - Fenced code blocks (```) instead of indented
+ *
+ * @param html - The HTML content to convert
+ * @returns The content as Markdown string
+ */
+function htmlToMarkdown(html: string): string {
+	const turndownService = new TurndownService({
+		headingStyle: "atx",
+		codeBlockStyle: "fenced",
+	});
+
+	return turndownService.turndown(html);
+}
+
+/**
  * Tool definition for read_website
  */
 export default function webReaderExtension(pi: ExtensionAPI) {
@@ -197,7 +217,7 @@ export default function webReaderExtension(pi: ExtensionAPI) {
 			// INN-53: Content-Type detection (text/plain, text/markdown, markdown detection) ✓ DONE
 			// INN-54: Markdown detection (body starts with # heading) ✓ DONE
 			// INN-55: HTML parsing with fallback selectors ✓ DONE
-			// INN-56: HTML to Markdown conversion using turndown
+			// INN-56: HTML to Markdown conversion using turndown ✓ DONE
 			// INN-57: Relative URL to absolute URL conversion
 			// INN-58: Error handling
 
@@ -223,9 +243,12 @@ export default function webReaderExtension(pi: ExtensionAPI) {
 			// Step 4: Extract main content from HTML
 			const mainContent = extractMainContent(body);
 
-			// Step 5: Convert to Markdown and process URLs (INN-56, INN-57)
-			// Placeholder - subsequent issues will add HTML-to-Markdown conversion and URL conversion
-			throw new Error("HTML parsing implemented, pending Markdown conversion and URL conversion (INN-56, INN-57)");
+			// Step 5: Convert to Markdown
+			let markdown = htmlToMarkdown(mainContent);
+
+			// Step 6: Convert relative URLs to absolute (INN-57)
+			// Placeholder - next issue will add URL conversion
+			throw new Error("HTML to Markdown conversion implemented, pending URL conversion (INN-57)");
 		},
 	});
 }
