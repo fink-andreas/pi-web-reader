@@ -200,6 +200,94 @@ function htmlToMarkdown(html: string): string {
 }
 
 /**
+ * Check if a URL is absolute or a special scheme that should not be converted
+ *
+ * @param url - The URL to check
+ * @returns True if the URL should be preserved as-is
+ */
+function shouldPreserveUrl(url: string): boolean {
+	if (!url || url.length === 0) {
+		return true;
+	}
+
+	const trimmedUrl = url.trim().toLowerCase();
+
+	// Preserve absolute URLs
+	if (trimmedUrl.startsWith("http://") || trimmedUrl.startsWith("https://")) {
+		return true;
+	}
+
+	// Preserve protocol-relative URLs
+	if (trimmedUrl.startsWith("//")) {
+		return true;
+	}
+
+	// Preserve special schemes
+	if (trimmedUrl.startsWith("data:") || trimmedUrl.startsWith("mailto:") || trimmedUrl.startsWith("tel:")) {
+		return true;
+	}
+
+	// Preserve anchors
+	if (trimmedUrl.startsWith("#")) {
+		return true;
+	}
+
+	return false;
+}
+
+/**
+ * Convert a relative URL to an absolute URL
+ *
+ * @param relativeUrl - The relative URL to convert
+ * @param baseUrl - The base URL of the page
+ * @returns The absolute URL
+ */
+function toAbsoluteUrl(relativeUrl: string, baseUrl: string): string {
+	try {
+		return new URL(relativeUrl, baseUrl).href;
+	} catch {
+		// If URL parsing fails, return as-is
+		return relativeUrl;
+	}
+}
+
+/**
+ * Convert relative URLs to absolute URLs in HTML
+ *
+ * Converts src and href attributes from relative to absolute URLs based on the base URL.
+ * Preserves absolute URLs, protocol-relative URLs, and special schemes.
+ *
+ * @param html - The HTML content to process
+ * @param baseUrl - The base URL of the fetched page
+ * @returns HTML with all relative URLs converted to absolute
+ */
+function convertUrlsToAbsolute(html: string, baseUrl: string): string {
+	const root = parse(html);
+
+	// Convert href attributes (links, a tags)
+	const links = root.querySelectorAll("a[href]");
+	for (const link of links) {
+		const href = link.getAttribute("href");
+		if (href && !shouldPreserveUrl(href)) {
+			const absoluteUrl = toAbsoluteUrl(href, baseUrl);
+			link.setAttribute("href", absoluteUrl);
+		}
+	}
+
+	// Convert src attributes (images, scripts, iframes, etc.)
+	const srcElements = root.querySelectorAll("[src]");
+	for (const element of srcElements) {
+		const src = element.getAttribute("src");
+		if (src && !shouldPreserveUrl(src)) {
+			const absoluteUrl = toAbsoluteUrl(src, baseUrl);
+			element.setAttribute("src", absoluteUrl);
+		}
+	}
+
+	return root.outerHTML;
+}
+
+/**
  * Tool definition for read_website
  */
 export default function webReaderExtension(pi: ExtensionAPI) {
@@ -218,7 +306,7 @@ export default function webReaderExtension(pi: ExtensionAPI) {
 			// INN-54: Markdown detection (body starts with # heading) ✓ DONE
 			// INN-55: HTML parsing with fallback selectors ✓ DONE
 			// INN-56: HTML to Markdown conversion using turndown ✓ DONE
-			// INN-57: Relative URL to absolute URL conversion
+			// INN-57: Relative URL to absolute URL conversion ✓ DONE
 			// INN-58: Error handling
 
 			// Step 1: Fetch the URL
@@ -241,14 +329,19 @@ export default function webReaderExtension(pi: ExtensionAPI) {
 			}
 
 			// Step 4: Extract main content from HTML
-			const mainContent = extractMainContent(body);
+			let mainContent = extractMainContent(body);
 
-			// Step 5: Convert to Markdown
-			let markdown = htmlToMarkdown(mainContent);
+			// Step 5: Convert relative URLs to absolute
+			mainContent = convertUrlsToAbsolute(mainContent, url);
 
-			// Step 6: Convert relative URLs to absolute (INN-57)
-			// Placeholder - next issue will add URL conversion
-			throw new Error("HTML to Markdown conversion implemented, pending URL conversion (INN-57)");
+			// Step 6: Convert to Markdown
+			const markdown = htmlToMarkdown(mainContent);
+
+			// Step 7: Return the Markdown content
+			return {
+				content: [{ type: "text", text: markdown }],
+				details: { contentType, converted: true },
+			};
 		},
 	});
 }
