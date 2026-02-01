@@ -8,6 +8,7 @@
 
 import axios from "axios";
 import https from "https";
+import { parse } from "node-html-parser";
 import type { ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-agent";
 import { Type } from "@sinclair/typebox";
 
@@ -139,6 +140,46 @@ function looksLikeMarkdown(body: string): boolean {
 }
 
 /**
+ * Extract main content from HTML using fallback selectors
+ *
+ * Tries selectors in order until a match is found:
+ * 1. #main-col-body
+ * 2. #main-content
+ * 3. article
+ * 4. main
+ * 5. .article, .post, .content
+ * 6. body (fallback)
+ *
+ * @param html - The HTML content to parse
+ * @returns The extracted main content as HTML string
+ */
+function extractMainContent(html: string): string {
+	const root = parse(html);
+
+	// Try selectors in order
+	const selectors = [
+		"#main-col-body",
+		"#main-content",
+		"article",
+		"main",
+		".article",
+		".post",
+		".content",
+		"body",
+	];
+
+	for (const selector of selectors) {
+		const element = root.querySelector(selector);
+		if (element) {
+			return element.outerHTML;
+		}
+	}
+
+	// If nothing found, return the full HTML
+	return html;
+}
+
+/**
  * Tool definition for read_website
  */
 export default function webReaderExtension(pi: ExtensionAPI) {
@@ -155,7 +196,7 @@ export default function webReaderExtension(pi: ExtensionAPI) {
 			// INN-52: HTTP fetch with timeout, custom User-Agent, SSL verification disabled ✓ DONE
 			// INN-53: Content-Type detection (text/plain, text/markdown, markdown detection) ✓ DONE
 			// INN-54: Markdown detection (body starts with # heading) ✓ DONE
-			// INN-55: HTML parsing with fallback selectors
+			// INN-55: HTML parsing with fallback selectors ✓ DONE
 			// INN-56: HTML to Markdown conversion using turndown
 			// INN-57: Relative URL to absolute URL conversion
 			// INN-58: Error handling
@@ -179,9 +220,12 @@ export default function webReaderExtension(pi: ExtensionAPI) {
 				};
 			}
 
-			// Step 4: HTML parsing and conversion (INN-55, INN-56, INN-57)
-			// Placeholder - subsequent issues will add HTML parsing and conversion
-			throw new Error("Markdown detection implemented, pending HTML parsing and conversion (INN-55 through INN-57)");
+			// Step 4: Extract main content from HTML
+			const mainContent = extractMainContent(body);
+
+			// Step 5: Convert to Markdown and process URLs (INN-56, INN-57)
+			// Placeholder - subsequent issues will add HTML-to-Markdown conversion and URL conversion
+			throw new Error("HTML parsing implemented, pending Markdown conversion and URL conversion (INN-56, INN-57)");
 		},
 	});
 }
