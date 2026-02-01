@@ -11,19 +11,38 @@
     "url": "https://github.com/fink-andreas/pi-web-reader/issues"
   },
   "homepage": "https://github.com/fink-andreas/pi-web-reader#readme",
-  "keywords": ["pi-package", "pi-coding-agent", "pi", "extension", "web-reader", "read-website"],
+  "keywords": [
+    "pi-package",
+    "pi-coding-agent",
+    "pi",
+    "extension",
+    "web-reader",
+    "read-website"
+  ],
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "prepublishOnly": "npm run build"
   },
   "pi": {
-    "extensions": ["extensions"]
+    "extensions": [
+      "extensions"
+    ]
   },
   "devDependencies": {
     "typescript": "^5.5.0"
+  },
+  "dependencies": {
+    "@sinclair/typebox": "^0.34.48",
+    "axios": "^1.13.4",
+    "node-html-parser": "^7.0.2",
+    "turndown": "^7.2.2"
   }
 }
