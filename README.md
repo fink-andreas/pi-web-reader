@@ -27,6 +27,47 @@ npm install @fink-andreas/pi-web-reader
 
 Pi will discover and load the extension automatically through the `pi` manifest field in `package.json`.
 
+### Local / Development Install (dvl)
+
+**Goal:** make the extension available in all projects by installing it under `~/.pi/agent/extensions/` as a small "package folder" with its own `node_modules`.
+
+#### 1) Create the extension folder
+
+```bash
+mkdir -p ~/.pi/agent/extensions/web-reader
+```
+
+#### 2) Add a minimal `package.json` and install runtime deps
+
+```bash
+cd ~/.pi/agent/extensions/web-reader && printf '{\n  "name": "web-reader-extension",\n  "private": true,\n  "type": "module"\n}\n' > package.json
+```
+
+Install the dependencies the extension imports:
+
+```bash
+cd ~/.pi/agent/extensions/web-reader && npm install axios node-html-parser turndown
+```
+
+*(If pi later complains about another missing module, install it the same way in this folder.)*
+
+#### 3) Link the extension entry file into the folder as `index.ts`
+
+```bash
+ln -sf ~/dvl/pi-web-reader/extensions/index.ts ~/.pi/agent/extensions/web-reader/index.ts
+```
+
+#### 4) Reload pi
+
+In pi: `/reload` (or restart pi)
+
+#### 5) Verify
+
+In pi you should see something like:
+
+* `[Extensions] … ~/.pi/agent/extensions/web-reader/index.ts`
+  and **no** `[Extension issues]`.
+
 ## Usage
 
 ### Using the Tool
