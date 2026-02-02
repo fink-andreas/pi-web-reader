@@ -297,7 +297,7 @@ export default function webReaderExtension(pi: ExtensionAPI) {
 		description: "Fetch a website URL and return raw Markdown representing the main readable content",
 		parameters: ReadWebsiteParams,
 
-		async execute(toolCallId, params, _onUpdate, _ctx, _signal) {
+		async execute(toolCallId, params, signal, onUpdate, ctx) {
 			const { url } = params as { url: string };
 
 			// Implementation steps (all complete):
